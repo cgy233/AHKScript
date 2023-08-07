@@ -20,8 +20,16 @@ voice := 0x10
 cur := 0
 choice := 0
 
-#!i::
+ShowTip(title, msg, timeout) {
 	HideTrayTip()
+
+}
+
+HideTrayTip() {
+	TrayTip
+}
+
+#!i::
 	cur := Mod(cur + 1, devices.Length())
 	option := logo+voice
 	ChangeDevice(devices[cur+1], option)
@@ -30,9 +38,6 @@ ChangeDevice(device, option) {
 	TrayTip, %device%, 播放设备, , %option%
 	Run, nircmd.exe setdefaultsounddevice %device%
 	SetTimer, HideTrayTip, 1300
-}
-HideTrayTip() {
-	TrayTip
 }
 #!a::
 	TrayTip, It's Apex time !!!, GOGOGO, ,0x12
