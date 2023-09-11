@@ -1,38 +1,25 @@
-#SingleInstance, Force
-#Persistent
-SetTimer, CheckInput, 120000
+﻿#SingleInstance, Force  ; 确保脚本只运行一个实例
+
+; 禁止休眠脚本
+; 作者：ChatGPT
+
+#Persistent  ; 保持脚本持续运行
+
+; 设置初始的时间间隔为120000毫秒（2分钟）
+interval := 120000
+; interval := 5000
+SetTimer, PreventSleep, %interval%
 return
 
-CheckInput:
-  ; 检查鼠标事件
-  Critical
-  OnMessage(0x200, "ResetTimer")  ; 0x200代表鼠标事件
-  MouseGetPos, , , id, control
-  If (id != 0) {
-    ; 如果检测到鼠标事件，重置计时器并返回
-    SetTimer, CheckInput, -1
-    SetTimer, CheckInput, 120000
-    return
-  }
+PreventSleep:
+	; 模拟NumLock按键事件
+	SetNumLockState, On
+	SetNumLockState, Off
 
-  ; 检查键盘事件
-  OnMessage(0x100, "ResetTimer")  ; 0x100代表键盘事件
-  Input, key, L1 V
-  If (ErrorLevel = "Timeout") {
-    ; 如果没有检测到键盘事件，重置计时器并返回
-    SetTimer, CheckInput, -1
-    SetTimer, CheckInput, 120000
-    return
-  }
+	; 根据需要调整时间间隔，这里将时间间隔修改为300000毫秒（5分钟）
+	; interval := 300000
+	SetTimer, PreventSleep, %interval%
 
-  ; 如果检测到键盘事件，重置计时器并返回
-  SetTimer, CheckInput, -1
-  SetTimer, CheckInput, 120000
+	; 在右下角显示消息提示
+	; TrayTip, Don't Sleep!, GOGOGO, ,0x11
 return
-
-ResetTimer(wParam, lParam) {
-  ; 重置计时器
-  SetTimer, CheckInput, -1
-  SetTimer, CheckInput, 120000
-  return
-}
