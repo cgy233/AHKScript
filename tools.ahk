@@ -1,6 +1,7 @@
 ﻿#SingleInstance, Force
 SendMode Input
 SetWorkingDir, %A_ScriptDir%
+#Include D:\Tools\AHKScript\xiaoai_volume_control.ahk
 
 devices := ["耳机", "音箱"]
 net_devices := ["192.168.2.2", "192.168.2.3"]
