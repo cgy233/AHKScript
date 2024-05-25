@@ -6,7 +6,7 @@ def find_video_files(directory, extensions=['.mp4', '.avi', '.mov', '.mkv']):
     video_files = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if any(file.lower().endswith(ext) for ext in extensions):
+            if any(file.lower().endswith(ext) for ext in extensions) and not file.startswith('processed_'):
                 video_files.append(os.path.join(root, file))
     return video_files
 
@@ -41,7 +41,6 @@ def process_video(file_path, target_fps_diff):
     target_fps = frame_rate - target_fps_diff
 
     # Check if the target frame rate is valid
-    target_fps = frame_rate - target_fps_diff
     if target_fps <= 0:
         print(f"目标帧率必须大于0，但给定的目标帧率是: {target_fps}")
         return
@@ -56,7 +55,7 @@ def process_video(file_path, target_fps_diff):
     estimated_time = total_frames / target_fps
     print(f"预计处理时间: {estimated_time} 秒")
 
-    output_file = file_path.rsplit('.', 1)[0] + f'_fps_{target_fps}.' + file_path.rsplit('.', 1)[1]
+    output_file = 'processed_' + file_path.rsplit('.', 1)[0] + f'_fps_{target_fps}.' + file_path.rsplit('.', 1)[1]
     ffmpeg_cmd = [
         'ffmpeg', '-y', '-i', file_path,
         '-vf', f'fps={target_fps}', '-c:v', 'h264_nvenc', '-b:v', f'{bit_rate}k', '-c:a', 'aac', output_file
