@@ -117,6 +117,29 @@ def process_single_video(file_path, reduce_frames):
     print(f"处理后的视频保存到: {new_file_path}")
     print(f"处理时间: {elapsed_time_str}")
 
+def split_video(file_path, chunk_size=1*1024*1024*1024):
+    clip = VideoFileClip(file_path)
+    total_duration = clip.duration
+    clip_size = os.path.getsize(file_path)
+    
+    num_chunks = math.ceil(clip_size / chunk_size)
+    chunk_duration = total_duration / num_chunks
+
+    video_name = os.path.splitext(os.path.basename(file_path))[0]
+    split_dir = os.path.join(os.path.dirname(file_path), f"_split_{video_name}")
+    os.makedirs(split_dir, exist_ok=True)
+
+    chunk_files = []
+    for i in range(num_chunks):
+        start_time = i * chunk_duration
+        end_time = (i + 1) * chunk_duration if (i + 1) * chunk_duration < total_duration else total_duration
+        chunk_clip = clip.subclip(start_time, end_time)
+        chunk_file_path = os.path.join(split_dir, f"{video_name}_chunk_{i+1}.mp4")
+        chunk_clip.write_videofile(chunk_file_path, codec='libx264', audio_codec='aac')
+        chunk_files.append(chunk_file_path)
+    
+    return chunk_files
+
 def process_video(file_path, reduce_frames):
     start_time = time.time()  # 记录开始时间
 
@@ -132,39 +155,21 @@ def process_video(file_path, reduce_frames):
     frame_interval = 1.0 / target_frame_rate
     print(f"原始帧率: {clip.fps}, 目标帧率: {target_frame_rate}, 帧间隔: {frame_interval}")
     
-    # 将视频分割成5秒的小段
-    clip_duration = 5.0
-    num_segments = int(clip.duration / clip_duration) + 1
-    segments = [clip.subclip(i*clip_duration, min((i+1)*clip_duration, clip.duration)) for i in range(num_segments)]
+    # 创建一个列表来保存保留的帧
+    frames = []
+    t = 0.0
+    while t < clip.duration:
+        frames.append(clip.get_frame(t))
+        t += frame_interval
     
-    # 创建临时文件列表保存处理后的段落
-    temp_files = []
-
-    for i, segment in enumerate(segments):
-        # 创建一个列表来保存保留的帧
-        frames = []
-        t = 0.0
-        while t < segment.duration:
-            frames.append(segment.get_frame(t))
-            t += frame_interval
-        
-        # 创建一个新的视频剪辑，使用保留的帧
-        new_segment = ImageSequenceClip(frames, fps=target_frame_rate)
-        
-        # 将原视频的音频裁剪到新视频的时长
-        audio = segment.audio.subclip(0, new_segment.duration)
-        
-        # 将音频添加到新视频剪辑中
-        final_segment = new_segment.set_audio(audio)
-        
-        # 临时保存处理后的段落
-        temp_file_path = f"temp_segment_{i}.mp4"
-        final_segment.write_videofile(temp_file_path, codec='libx264', audio_codec='aac')
-        temp_files.append(temp_file_path)
+    # 创建一个新的视频剪辑，使用保留的帧
+    new_clip = ImageSequenceClip(frames, fps=target_frame_rate)
     
-    # 加载临时保存的段落并合并
-    processed_segments = [VideoFileClip(temp_file) for temp_file in temp_files]
-    final_clip = concatenate_videoclips(processed_segments)
+    # 将原视频的音频裁剪到新视频的时长
+    audio = clip.audio.subclip(0, new_clip.duration)
+    
+    # 将音频添加到新视频剪辑中
+    final_clip = new_clip.set_audio(audio)
     
     # 生成新文件名
     new_file_path = file_path.rsplit('.', 1)[0] + '_changed_fps_with_audio.' + file_path.rsplit('.', 1)[1]
@@ -172,17 +177,43 @@ def process_video(file_path, reduce_frames):
     # 写入新文件
     final_clip.write_videofile(new_file_path, codec='libx264', audio_codec='aac')
 
-    # 删除临时文件
-    for temp_file in temp_files:
-        os.remove(temp_file)
-
     end_time = time.time()  # 记录结束时间
     elapsed_time = end_time - start_time  # 计算执行时间
     elapsed_time_str = str(timedelta(seconds=elapsed_time))  # 将秒数转换为时分秒的格式
     print(f"处理后的视频保存到: {new_file_path}")
     print(f"处理时间: {elapsed_time_str}")
+    return new_file_path
 
-def process_directory(dir_path, target_reduce_frames):
+def merge_videos(video_files, output_path):
+    clips = [VideoFileClip(video_file) for video_file in video_files]
+    final_clip = concatenate_videoclips(clips)
+    final_clip.write_videofile(output_path, codec='libx264', audio_codec='aac')
+
+def process_large_video(file_path, reduce_frames, chunk_size=1*1024*1024*1024):
+    # Step 1: Split video if larger than chunk_size
+    if os.path.getsize(file_path) > chunk_size:
+        chunk_files = split_video(file_path, chunk_size)
+    else:
+        chunk_files = [file_path]
+
+    # Step 2: Process each chunk
+    processed_chunk_files = []
+    for chunk_file in chunk_files:
+        processed_chunk_file = process_video(chunk_file, reduce_frames)
+        processed_chunk_files.append(processed_chunk_file)
+
+    # Step 3: Merge processed chunks
+    video_name = os.path.splitext(os.path.basename(file_path))[0]
+    output_path = file_path.rsplit('.', 1)[0] + '_changed_fps_with_audio.' + file_path.rsplit('.', 1)[1]
+    merge_videos(processed_chunk_files, output_path)
+
+    # Step 4: Clean up split files
+    for chunk_file in chunk_files:
+        os.remove(chunk_file)
+    split_dir = os.path.dirname(chunk_files[0])
+    shutil.rmtree(split_dir)
+
+def process_directory(dir_path, target_reduce_frames, chunk_size=1*1024*1024*1024):
     # 列出目录下的文件和子目录
     files = os.listdir(dir_path)
     num_videos = sum(1 for file_name in files if os.path.isfile(os.path.join(dir_path, file_name)) and file_name.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')))
@@ -203,56 +234,14 @@ def process_directory(dir_path, target_reduce_frames):
             if file_name.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):  
                 # 处理视频文件
                 try:
-                    new_file_path = process_video(file_path, target_reduce_frames)
-                    if new_file_path:
-                        # 如果根目录只有一个视频文件，则将处理后的视频覆盖原视频文件
-                        # 否则，将处理后的视频移动到新目录
-                        if num_videos == 1:
-                            shutil.move(new_file_path, file_path)
-                        else:
-                            shutil.move(new_file_path, new_dir_path)
+                    process_large_video(file_path, target_reduce_frames, chunk_size)
                 except MemoryError:
                     print(f"处理视频时内存不足: {file_name}")
             else:
                 print(f"忽略非视频文件或已处理的视频: {file_name}")
         elif os.path.isdir(file_path):
             # 递归处理子目录
-            process_directory(file_path, target_reduce_frames)
-
-def process_directory(dir_path, target_reduce_frames):
-    # 列出目录下的文件和子目录
-    files = os.listdir(dir_path)
-    num_videos = sum(1 for file_name in files if os.path.isfile(os.path.join(dir_path, file_name)) and file_name.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')) and not file_name.endswith('_changed_fps_with_audio.mp4'))
-    
-    # 如果根目录只有一个视频文件，则直接在原目录下处理，无需生成新目录
-    if num_videos == 1:
-        new_dir_path = dir_path
-    else:
-        # 否则，为处理后的视频创建一个新目录
-        new_dir_path = dir_path + '_AFTER_FRAME_EXT'
-        os.makedirs(new_dir_path, exist_ok=True)
-
-    # 遍历目录中的文件和子目录
-    for file_name in files:
-        file_path = os.path.join(dir_path, file_name)
-        if os.path.isfile(file_path):
-            # 检查是否是视频文件
-            if file_name.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')) and not file_name.endswith('_changed_fps_with_audio.mp4'):  
-                # 处理视频文件
-                new_file_path = process_video(file_path, target_reduce_frames)
-                if new_file_path:
-                    # 如果根目录只有一个视频文件，则将处理后的视频覆盖原视频文件
-                    # 否则，将处理后的视频移动到新目录
-                    if num_videos == 1:
-                        shutil.move(new_file_path, file_path)
-                    else:
-                        shutil.move(new_file_path, new_dir_path)
-            else:
-                print(f"忽略非视频文件或已处理的视频: {file_name}")
-        elif os.path.isdir(file_path):
-            # 递归处理子目录
-            process_directory(file_path, target_reduce_frames)
+            process_directory(file_path, target_reduce_frames, chunk_size)
 
 # Process the current directory
-process_directory('.', 5)
-# process_video("D:/Tools/AHKScript/VideoProess/test_video.mp4", 20)
+process_directory('.', 5, chunk_size=1*1024*1024*1024)
