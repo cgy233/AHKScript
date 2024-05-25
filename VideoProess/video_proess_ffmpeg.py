@@ -2,6 +2,8 @@ import os
 import subprocess
 import json
 
+from datetime import timedelta
+
 def find_video_files(directory, extensions=['.mp4', '.avi', '.mov', '.mkv']):
     video_files = []
     for root, _, files in os.walk(directory):
@@ -52,21 +54,30 @@ def process_video(file_path, target_fps_diff):
     cmd = ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=nb_frames', '-of', 'default=nokey=1:noprint_wrappers=1', file_path]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     total_frames = int(result.stdout or 0)
-    estimated_time = total_frames / target_fps
-    print(f"预计处理时间: {estimated_time} 秒")
+    estimated_time = timedelta(seconds=int(total_frames / target_fps))
+    print(f"预计处理时间（根据硬件性能有所不同、仅供参考）: {estimated_time} (时:分:秒)")
+    print("请稍等，视频正在处理中...")
 
-    output_file = 'processed_' + file_path.rsplit('.', 1)[0] + f'_fps_{target_fps}.' + file_path.rsplit('.', 1)[1]
+    dir_name, file_name = os.path.split(file_path)
+    base_name, ext = os.path.splitext(file_name)
+    output_file = os.path.join(dir_name, 'processed_' + base_name + f'_fps_{target_fps}' + ext)
+
+    # If bit_rate is too high, reduce it
+    if bit_rate > 5000:
+        bit_rate = bit_rate / 2
+
     ffmpeg_cmd = [
         'ffmpeg', '-y', '-i', file_path,
-        '-vf', f'fps={target_fps}', '-c:v', 'h264_nvenc', '-b:v', f'{bit_rate}k', '-c:a', 'aac', output_file
+        '-vf', f'fps={target_fps}', '-c:v', 'h264_nvenc', '-b:v', '5M', '-c:a', 'aac', output_file
     ]
 
     import time
     start_time = time.time()
-    subprocess.run(ffmpeg_cmd, check=True)
+    subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
     end_time = time.time()
 
-    print(f"实际处理完成时间: {end_time - start_time} 秒")
+    actual_time = timedelta(seconds=int(end_time - start_time))
+    print(f"实际处理完成时间: {actual_time} (时:分:秒)")
     print(f"处理后的视频保存在: {output_file}")
 
 def process_directory(directory, target_fps):
