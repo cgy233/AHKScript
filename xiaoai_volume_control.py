@@ -2,8 +2,8 @@ import paho.mqtt.publish as publish
 import json
 import sys
 
-server_address = ""
-mqtt_topic = ""
+server_address = "cyupi.top"
+mqtt_topic = "ethanpc/knob"
 
 def set_xiaoai_volume(volume):
     # 检查volume的范围，确保在0.0到1.0之间

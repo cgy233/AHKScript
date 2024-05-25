@@ -1,20 +1,20 @@
 ﻿#SingleInstance, Force
 SendMode Input
 SetWorkingDir, %A_ScriptDir%
-#Include D:\Tools\AHKScript\xiaoai_volume_control.ahk
 
+; ************************************************** MQTT客户端 ************************************************
+
+mqtt_server_py := "python -u D:\Tools\AHKScript\MQ_Control\ethanpc_mq_control.py"
+Run, %mqtt_server_py%, , Hide
+
+; ************************************************** 音量控制 **************************************************
+
+; 初始化音量数组和索引
+global volumeLevels := [10, 25, 50, 75, 100]
+global volumeIndex := 3 ; 初始索引，对应音量50
+
+; ************************************************** 输出设备切换 **************************************************
 devices := ["耳机", "音箱"]
-
-; 0: home 1:work
-net_type := 1
-
-net_home_addr := "192.168.2.23"
-net_home_dns := "223.5.5.5"
-net_home_gateways := ["192.168.2.2", "192.168.2.3"]
-
-net_work_addr := "192.168.3.180"
-net_work_dns := "192.168.3.166"
-net_work_gateways := ["192.168.3.254", "192.168.3.78"]
 
 logo := 0x1
 voice := 0x10
@@ -38,36 +38,70 @@ HideTrayTip() {
 ChangeDevice(device, option) {
 	TrayTip, %device%, 播放设备, , %option%
 	Run, nircmd.exe setdefaultsounddevice %device%
-	SetTimer, HideTrayTip, 1300
-}
-#!a::
-	TrayTip, It's Apex time !!!, GOGOGO, ,0x12
-	Run, C:\Users\Ethan\Desktop\AHK.lnk
 	SetTimer, HideTrayTip, 1000
-	return
-#!s::
-	{
-		If (net_type)
-		{
-			net_devices := net_work_gateways
-			dns := net_work_dns
-			addr := net_work_addr
-		}
-		Else
-		{
-			net_devices := net_home_gateways
-			dns := net_home_dns
-			addr := net_home_addr
-		}
-		choice := Mod(choice + 1, net_devices.Length())
-		gateway := net_devices[choice + 1]
-		Run, *RunAs %ComSpec% /c netsh interface ip set address name="以太网" source=static addr=%addr% mask=255.255.255.0 gateway=%gateway%,,hide
-		Run, *RunAs %ComSpec% /c netsh interface ip set dns name="以太网" source=static addr=%dns%,,hide
-		return
-	}
-
+}
 ; 屏蔽全角
-+Space::Send, {Space}
+; +Space::Send, {Space}
 #!l::Run, https://www.bilibili.com
 #!z::Run, https://www.zhihu.com
 #!v::Run, https://www.v2ex.com
+#!f::Run, https://jable.tv/hot/
+#!a::Run, https://chat.openai.com
+#!p::Send, lArocheposay@233..
+
+; VIM
+!k::Send {Up}
+!j::Send {Down}
+!h::Send {Left}
+!l::Send {Right}
+
+; ************************************************** 小爱音箱音量控制 **************************************************
+
+; 监听 Win+Alt+Up 和 Win+Alt+Down 组合键
+#!Up:: ; Win+Alt+Up
+	IncreaseVolume()
+return
+
+#!Down:: ; Win+Alt+Down
+	DecreaseVolume()
+return
+
+; 增加音量的函数
+IncreaseVolume() {
+	if (volumeIndex < 5) {
+		volumeIndex := volumeIndex + 1
+	}
+	SendMqttMessage()
+}
+
+; 减少音量的函数
+DecreaseVolume() {
+	if (volumeIndex > 1) {
+		volumeIndex := volumeIndex - 1
+	}
+	SendMqttMessage()
+}
+
+; 发送 MQTT 消息的函数
+SendMqttMessage() {
+	value := volumeLevels[volumeIndex]
+	; 构建 Python 命令
+	pythonCommand := "python -u D:\Tools\AHKScript\xiaoai_volume_control.py " . value
+
+	; 调用 Python 脚本发送 MQTT 消息
+	Run, %pythonCommand%, , Hide
+
+	; 显示当前音量提示
+	ShowToolTip(value)
+}
+
+; 显示提示的函数
+ShowToolTip(value) {
+	ToolTip, volume: %value%
+	SetTimer, RemoveToolTip, 1000 ; 1秒后移除提示
+}
+
+; 移除提示的函数
+RemoveToolTip() {
+	ToolTip
+}
