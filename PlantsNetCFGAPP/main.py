@@ -8,7 +8,7 @@ import sys
 import json
 
 tcp_server_address = '192.168.4.1'
-tcp_server_port = 80
+tcp_server_port = 8080
 threads = []  # 跟踪所有线程
 
 def check_ap_update_queue():

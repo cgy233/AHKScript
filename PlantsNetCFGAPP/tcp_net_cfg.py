@@ -77,7 +77,7 @@ def receive_command(s):
 def send_scan_ap_info(s):
     """发送WiFi信息"""
     try:
-        command = json.dumps({"cmd": "get_nearby_ap_info"}, separators=(',', ':'))
+        command = json.dumps({"cmd": "get_nearby_ap_info"})
         s.sendall(command.encode('utf-8'))
     except Exception as e:
         print(f"发送扫描AP指令失败: {e}")
@@ -85,7 +85,7 @@ def send_scan_ap_info(s):
 def send_wifi_info(s, ssid, pwd):
     """发送WiFi信息"""
     try:
-        wifi_info = json.dumps({"cmd": "ap_info", "ssid": ssid, "pwd": pwd}, separators=(',', ':'))
+        wifi_info = json.dumps({"cmd": "ap_info", "ssid": ssid, "pwd": pwd})
         s.sendall(wifi_info.encode('utf-8'))
     except Exception as e:
         print(f"发送WiFi信息失败: {e}")
@@ -111,7 +111,7 @@ def main():
 
 def send_periodic_commands(s):
     """每隔6秒发送一次命令"""
-    command = json.dumps({"cmd": "get_nearby_ap_info"}, separators=(',', ':'))
+    command = json.dumps({"cmd": "get_nearby_ap_info"})
     while continue_sending_commands.is_set():
         try:
             s.sendall(command.encode('utf-8'))

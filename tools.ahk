@@ -10,11 +10,12 @@ Run, %mqtt_server_py%, , Hide
 ; ************************************************** 音量控制 **************************************************
 
 ; 初始化音量数组和索引
-global volumeLevels := [10, 25, 50, 75, 100]
+global volumeLevelsCount := 6
+global volumeLevels := [30, 50, 70, 79, 100]
 global volumeIndex := 3 ; 初始索引，对应音量50
 
 ; ************************************************** 输出设备切换 **************************************************
-devices := ["耳机", "音箱"]
+devices := ["耳机", "扬声器"]
 
 logo := 0x1
 voice := 0x10
@@ -43,10 +44,11 @@ ChangeDevice(device, option) {
 ; 屏蔽全角
 ; +Space::Send, {Space}
 #!l::Run, https://www.bilibili.com
-#!z::Run, https://www.zhihu.com
 #!v::Run, https://www.v2ex.com
 #!f::Run, https://jable.tv/hot/
 #!a::Run, https://chat.openai.com
+#!s::Run, https://grok.com
+#!d::Run, https://chat.deepseek.com
 #!p::Send, lArocheposay@233..
 
 ; VIM
@@ -68,7 +70,7 @@ return
 
 ; 增加音量的函数
 IncreaseVolume() {
-	if (volumeIndex < 5) {
+	if (volumeIndex < (volumeLevelsCount - 1)) {
 		volumeIndex := volumeIndex + 1
 	}
 	SendMqttMessage()

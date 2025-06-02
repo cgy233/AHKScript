@@ -1,2 +1,11 @@
 *.exe
 *.mp4
+*.spec
+*.toc
+*.zip
+*.pyc
+*.pkg
+*.pyz
+*.html
+*.txt
+*.log
