@@ -2,11 +2,6 @@
 SendMode Input
 SetWorkingDir, %A_ScriptDir%
 
-; ************************************************** MQTT客户端 ************************************************
-
-mqtt_server_py := "python -u D:\Tools\AHKScript\MQ_Control\ethanpc_mq_control.py"
-Run, %mqtt_server_py%, , Hide
-
 ; ************************************************** 音量控制 **************************************************
 
 ; 初始化音量数组和索引

@@ -3,10 +3,11 @@
 SetKeyDelay -1 ;發送鍵擊後無延遲
 #SingleInstance Force
 
-F9::
+; 回退
+Right::
 {
     steps := [
-        ["esc",   300],
+        ["esc",   500],
         ["left",  300],
         ["enter", 300],
         ["space", 1000],
@@ -37,10 +38,11 @@ F9::
     }
 }
 
-F10::
+; 存档
+Left::
 {
     steps := [
-        ["esc",   300],
+        ["esc",   500],
         ["left",  300],
         ["enter", 300],
         ["space", 1000],

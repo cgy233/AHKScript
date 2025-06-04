@@ -1,3 +1,8 @@
+.cursor
+.vscode
+MQ_Control
+PlantsNetCFGAPP
+
 *.exe
 *.mp4
 *.spec
