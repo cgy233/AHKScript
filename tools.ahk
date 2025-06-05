@@ -52,6 +52,11 @@ ChangeDevice(device, option) {
 !h::Send {Left}
 !l::Send {Right}
 
+; Media 
+; next music
+!Left:: Send {Media_Next}
+!Right:: Send {Media_Prev}
+
 ; ************************************************** 小爱音箱音量控制 **************************************************
 
 ; 监听 Win+Alt+Up 和 Win+Alt+Down 组合键
