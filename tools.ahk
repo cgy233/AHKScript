@@ -56,6 +56,8 @@ ChangeDevice(device, option) {
 ; next music
 !Left:: Send {Media_Next}
 !Right:: Send {Media_Prev}
+!WheelUp:: Send {Volume_Up}
+!WheelDown:: Send {Volume_Down}
 
 ; ************************************************** 小爱音箱音量控制 **************************************************
 
