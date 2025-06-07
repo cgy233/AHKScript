@@ -3,71 +3,61 @@
 SetKeyDelay -1 ;發送鍵擊後無延遲
 #SingleInstance Force
 
-; 回退
-Right::
-{
-    steps := [
-        ["esc",   500],
-        ["left",  300],
-        ["enter", 300],
-        ["space", 1000],
-        ["down",  500],
-        ["down",  500],
-        ["enter", 500],
-        ["right", 500],
-        ["x",     300],
-        ["left",  300],
-        ["enter", 300],
-        ["space", 500],
-        ["esc",   500],
-        ["enter", 300],
-        ["enter", 0]
-    ]
-
+; 封装步骤发送函数
+sendSteps(steps) {
     for step in steps
     {
         key := step[1]
         delay := step[2]
-
         Send "{" key " down}"
-        Sleep 50
+        Sleep 100
         Send "{" key " up}"
-
         if (delay > 0)
             Sleep delay
     }
+}
+
+; 回退
+Right::
+{
+    steps := [
+        ["esc",   100],
+        ["left",  100],
+        ["enter", 100],
+        ["space", 500],
+        ["down",  100],
+        ["down",  100],
+        ["enter", 100],
+        ["right", 100],
+        ["x",     100],
+        ["left",  100],
+        ["enter", 100],
+        ["space", 100],
+        ["esc",   100],
+        ["enter", 100],
+        ["enter", 0]
+    ]
+    sendSteps(steps)
 }
 
 ; 存档
 Left::
 {
     steps := [
-        ["esc",   500],
-        ["left",  300],
-        ["enter", 300],
-        ["space", 1000],
-        ["down",  500],
-        ["down",  500],
-        ["enter", 500],
-        ["x",     300],
-        ["right", 500],
-        ["enter", 300],
+        ["esc",   100],
+        ["left",  100],
+        ["enter", 100],
         ["space", 500],
-        ["esc",   500],
-        ["enter", 300],
+        ["down",  100],
+        ["down",  100],
+        ["enter", 100],
+        ["x",     100],
+        ["right", 100],
+        ["enter", 100],
+        ["space", 100],
+        ["esc",   100],
+        ["enter", 100],
         ["enter", 0]
     ]
-
-    for step in steps
-    {
-        key := step[1]
-        delay := step[2]
-
-        Send "{" key " down}"
-        Sleep 50
-        Send "{" key " up}"
-
-        if (delay > 0)
-            Sleep delay
-    }
+    sendSteps(steps)
 }
