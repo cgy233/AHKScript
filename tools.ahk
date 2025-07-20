@@ -54,8 +54,8 @@ ChangeDevice(device, option) {
 
 ; Media 
 ; next music
-!Left:: Send {Media_Next}
-!Right:: Send {Media_Prev}
+!Right:: Send {Media_Next}
+!Left:: Send {Media_Prev}
 !WheelUp:: Send {Volume_Up}
 !WheelDown:: Send {Volume_Down}
 
