@@ -1,0 +1,10 @@
+{
+  "domain": "lark_robot",
+  "name": "Lark Robot",
+  "codeowners": [],
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/synology_chat",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}
